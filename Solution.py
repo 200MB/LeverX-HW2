@@ -1,6 +1,4 @@
 import argparse
-import sys
-from argparse import ArgumentParser
 from dataclasses import dataclass, field, asdict
 import xml.etree.ElementTree as ET
 import json
@@ -22,19 +20,31 @@ class Room:
 
 
 class DataLoader(ABC):
+    """
+    Abstract class serving as an interface for all data loading mechanisms
+    """
+
     @abstractmethod
-    def load(self, students_path: str, rooms_path: str) -> tuple[list[Student], list[Room]]:
+    def load(
+        self, students_path: str, rooms_path: str
+    ) -> tuple[list[Student], list[Room]]:
         pass
 
 
 class DataSerializer(ABC):
+    """
+    Abstract class serving as an interface for all data serialization mechanisms
+    """
+
     @abstractmethod
     def serialize(self, combined_rooms: list[Room]) -> str:
         pass
 
 
 class JsonDataLoader(DataLoader):
-    def load(self, students_path: str, rooms_path: str) -> tuple[list[Student], list[Room]]:
+    def load(
+        self, students_path: str, rooms_path: str
+    ) -> tuple[list[Student], list[Room]]:
         def load_json(path):
             with open(path) as f:
                 return json.load(f)
@@ -42,7 +52,6 @@ class JsonDataLoader(DataLoader):
         students_json = load_json(students_path)
         rooms_json = load_json(rooms_path)
 
-        # Convert dictionaries to Student and Room objects
         students = [Student(s["id"], s["name"], s["room"]) for s in students_json]
         rooms = [Room(r["id"], r["name"]) for r in rooms_json]
 
@@ -50,16 +59,18 @@ class JsonDataLoader(DataLoader):
 
 
 class XmlDataLoader(DataLoader):
-    def load(self, students_path: str, rooms_path: str) -> tuple[list[Student], list[Room]]:
+    def load(
+        self, students_path: str, rooms_path: str
+    ) -> tuple[list[Student], list[Room]]:
         def parse_students(xml_path):
             try:
                 tree = ET.parse(xml_path)
                 students = []
                 for student_el in tree.getroot():
                     student = Student(
-                        id=int(student_el.find('id').text),
-                        name=student_el.find('name').text,
-                        room_id=int(student_el.find('room').text)
+                        id=int(student_el.find("id").text),
+                        name=student_el.find("name").text,
+                        room_id=int(student_el.find("room").text),
                     )
                     students.append(student)
                 return students
@@ -72,8 +83,7 @@ class XmlDataLoader(DataLoader):
                 rooms = []
                 for room_el in tree.getroot():
                     room = Room(
-                        id=int(room_el.find('id').text),
-                        name=room_el.find('name').text
+                        id=int(room_el.find("id").text), name=room_el.find("name").text
                     )
                     rooms.append(room)
                 return rooms
@@ -120,6 +130,10 @@ class XmlDataSerializer(DataSerializer):
 
 
 class RoomDataProcessor:
+    """
+    Class for primary business logic.
+    """
+
     def __init__(self, data_loader: DataLoader):
         self.data_loader = data_loader
 
@@ -135,25 +149,31 @@ class RoomDataProcessor:
 
 
 def main():
+    """
+    Main function for parsing CLI arguments.
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument("students_file", help="Path to student JSON file")
     parser.add_argument("rooms_file", help="Path to room JSON file")
     parser.add_argument(
-        "-i", "--input-format",
+        "-i",
+        "--input-format",
         choices=["json", "xml"],
         default="json",
-        help="Path to output JSON file"
+        help="Path to output JSON file",
     )
     parser.add_argument(
-        "-o", "--output-format",
+        "-o",
+        "--output-format",
         choices=["json", "xml"],
         default="json",
-        help="Path to output JSON file"
+        help="Path to output JSON file",
     )
     parser.add_argument(
-        "-d", "--output-destination",
-        help="Path to output file, if not specified, prints to console"
+        "-d",
+        "--output-destination",
+        help="Path to output file, if not specified, prints to console",
     )
     args = parser.parse_args()
 
@@ -173,7 +193,10 @@ def main():
     elif args.output_format == "xml":
         serializer = XmlDataSerializer()
     else:
-        raise ValueError(f"Output format {args.output_format} is not supported")
+        raise ValueError(
+            f"Output format {
+                args.output_format} is not supported"
+        )
 
     output_data = serializer.serialize(combined_rooms)
 
