@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass, field, asdict
 import xml.etree.ElementTree as ET
@@ -27,7 +28,7 @@ class DataLoader(ABC):
 
     @abstractmethod
     def load(
-        self, students_path: str, rooms_path: str
+            self, students_path: str, rooms_path: str
     ) -> tuple[list[Student], list[Room]]:
         pass
 
@@ -44,7 +45,7 @@ class DataSerializer(ABC):
 
 class JsonDataLoader(DataLoader):
     def load(
-        self, students_path: str, rooms_path: str
+            self, students_path: str, rooms_path: str
     ) -> tuple[list[Student], list[Room]]:
         def load_json(path):
             with open(path) as f:
@@ -61,7 +62,7 @@ class JsonDataLoader(DataLoader):
 
 class XmlDataLoader(DataLoader):
     def load(
-        self, students_path: str, rooms_path: str
+            self, students_path: str, rooms_path: str
     ) -> tuple[list[Student], list[Room]]:
         def parse_students(xml_path):
             try:
@@ -197,13 +198,16 @@ def main():
         serializer = XmlDataSerializer()
     else:
         raise ValueError(
-            f"Output format {
-                args.output_format} is not supported"
+            f"Output format {args.output_format} is not supported"
         )
 
     output_data = serializer.serialize(combined_rooms)
 
     if args.output_destination:
+        file_path = Path(args.output_destination)
+        extension = file_path.suffix.lower()[1:]
+        if extension != args.output_format.lower():
+            raise ValueError("File destination extension does not match output format.")
         with open(args.output_destination, "w") as f:
             f.write(output_data)
         print(f"Wrote to {args.output_destination} successfully!")
