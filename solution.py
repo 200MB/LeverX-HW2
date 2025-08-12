@@ -1,4 +1,5 @@
 import argparse
+from collections import defaultdict
 from dataclasses import dataclass, field, asdict
 import xml.etree.ElementTree as ET
 import json
@@ -140,12 +141,14 @@ class RoomDataProcessor:
     def combine_rooms(self, students_path: str, rooms_path: str) -> list[Room]:
         students, rooms = self.data_loader.load(students_path, rooms_path)
 
-        combined_rooms = []
-        for room in rooms:
-            room.students = [s for s in students if s.room_id == room.id]
-            combined_rooms.append(room)
+        student_map = defaultdict(list)
+        for student in students:
+            student_map[student.room_id].append(student)
 
-        return combined_rooms
+        for room in rooms:
+            room.students = student_map.get(room.id, [])
+
+        return rooms
 
 
 def main():
